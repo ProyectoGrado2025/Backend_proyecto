@@ -1,4 +1,4 @@
-package es.daw.restaurantV1.models;
+package es.daw2.restaurant_V1.models;
 
 import java.util.List;
 
