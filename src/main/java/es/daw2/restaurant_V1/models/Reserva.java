@@ -31,6 +31,9 @@ public class Reserva {
     @Column(name = "reserva_fecha", nullable = false, columnDefinition = "DATETIME")
     private LocalDateTime reserva_fecha;
 
+    @Column(name = "numero_personas", nullable = false, columnDefinition = "INTEGER")
+    private Integer numero_personas;
+    
     @ManyToOne
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
