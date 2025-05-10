@@ -9,10 +9,12 @@ import es.daw2.restaurant_V1.services.IFServicioFactura;
 import es.daw2.restaurant_V1.services.IFServicioPedido;
 import es.daw2.restaurant_V1.services.IFServicioReserva;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 
+@CrossOrigin
 @RestController
 @RequestMapping("/worker")
 // Un usuario con rol "worker" solo tendrá acceso a la lectura de los datos de las reservas, cliente, facturas y pedidos

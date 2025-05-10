@@ -42,6 +42,7 @@ public class ImpServicioReserva implements IFServicioReserva{
             Reserva existingReservation = reservationContainer.get();
             existingReservation.setNumero_personas(reservation.getNumero_personas());
             existingReservation.setReserva_fecha(reservation.getReserva_fecha());
+            reservationRepository.save(existingReservation);
 
             return true;
         }

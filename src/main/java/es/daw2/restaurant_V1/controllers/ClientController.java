@@ -12,6 +12,7 @@ import es.daw2.restaurant_V1.models.Reserva;
 import es.daw2.restaurant_V1.services.IFServicioCliente;
 import es.daw2.restaurant_V1.services.IFServicioReserva;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/client")
 // Un usuario con rol "client" podrá leer, crear, actualizar y borrar datos relativos a su reserva. Pero nunca tendrá acceso a las demás reservas.

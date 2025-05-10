@@ -45,5 +45,4 @@ public class Reserva {
         inverseJoinColumns = @JoinColumn(name = "mesa_id")
     )
     private List<Mesa> mesas;
-    
 }

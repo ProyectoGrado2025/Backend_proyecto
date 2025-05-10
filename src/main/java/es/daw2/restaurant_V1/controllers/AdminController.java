@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ import es.daw2.restaurant_V1.services.IFServicioPedido;
 import es.daw2.restaurant_V1.services.IFServicioPlato;
 import es.daw2.restaurant_V1.services.IFServicioPlatoCategoria;
 import es.daw2.restaurant_V1.services.IFServicioReserva;
+
 
 @RestController
 @RequestMapping("/admin")
@@ -128,7 +130,6 @@ public class AdminController {
         } else {
             return ResponseEntity.badRequest().body("ERROR AL CREAR UN CLIENTE"); 
         }
-
     }
 
     @PutMapping("/updateclient/{id}")
@@ -178,9 +179,8 @@ public class AdminController {
             URI location = URI.create("/admin/getinvoice/" + invoice.getFactura_id());
             return ResponseEntity.created(location).body(invoice);
         } else {
-            return ResponseEntity.badRequest().body("ERROR AL CREAR UN CLIENTE"); 
+            return ResponseEntity.badRequest().body("ERROR AL CREAR LA FACTURA"); 
         }
-
     }
 
     @PutMapping("/updateinvoice/{id}")
@@ -190,7 +190,7 @@ public class AdminController {
         if(updated){
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.badRequest().body("ERROR AL ACTUALIZAR AL CLIENTE");
+            return ResponseEntity.badRequest().body("ERROR AL ACTUALIZAR LA FACTURA");
         }
     }
 
