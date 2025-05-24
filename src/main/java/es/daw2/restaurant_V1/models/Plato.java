@@ -10,30 +10,26 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "Platos")
-
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-
 public class Plato {
 
-    @Id @GeneratedValue
-    private Long plato_id;
+    @Id 
+    @GeneratedValue
+    @Column(name = "plato_id")
+    private Long platoId;
 
-    @Column(name = "plato_nombre", nullable = false, columnDefinition = "VARCHAR(45)")
-    private String plato_nombre;
+    @Column(name = "plato_nombre", nullable = false, length = 45)
+    private String platoNombre;
 
-    @Column(name = "plato_descripcion", nullable = false, columnDefinition = "VARCHAR(200)")
-    private String plato_descripcion;
+    @Column(name = "plato_descripcion", nullable = false, length = 200)
+    private String platoDescripcion;
 
     @Column(name = "plato_precio", nullable = false, columnDefinition = "DECIMAL(10,2)")
-    private Float plato_precio;
+    private Float platoPrecio;
 
     @ManyToMany
     @JoinTable(
@@ -41,5 +37,13 @@ public class Plato {
         joinColumns = @JoinColumn(name = "plato_id"),
         inverseJoinColumns = @JoinColumn(name = "categoria_id")
     )
-    private List<PlatoCategoria> categorias;
+    private List<Categoria> categorias;
+
+    @ManyToMany
+    @JoinTable(
+        name = "plato_alergeno",
+        joinColumns = @JoinColumn(name = "plato_id"),
+        inverseJoinColumns = @JoinColumn(name = "alergeno_id")
+    )
+    private List<Alergeno> alergenos;
 }

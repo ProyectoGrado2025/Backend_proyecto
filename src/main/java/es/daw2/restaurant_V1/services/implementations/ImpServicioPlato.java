@@ -1,4 +1,4 @@
-package es.daw2.restaurant_V1.services;
+package es.daw2.restaurant_V1.services.implementations;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import es.daw2.restaurant_V1.models.Plato;
 import es.daw2.restaurant_V1.repositories.PlatoRepositorio;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioPlato;
 
 @Service
 public class ImpServicioPlato implements IFServicioPlato{

@@ -1,4 +1,4 @@
-package es.daw2.restaurant_V1.services;
+package es.daw2.restaurant_V1.services.implementations;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import es.daw2.restaurant_V1.models.Cliente;
 import es.daw2.restaurant_V1.repositories.ClienteRepositorio;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioCliente;
 
 @Service
 public class ImpServicioCliente implements IFServicioCliente {
@@ -45,9 +46,9 @@ public class ImpServicioCliente implements IFServicioCliente {
 
             // Se accede a la clase contenida y se actualizan los datos
             Cliente existingClient = clientContainer.get();
-            existingClient.setCliente_email(client.getCliente_email());
-            existingClient.setCliente_nombre(client.getCliente_nombre());
-            existingClient.setCliente_tlfn(client.getCliente_tlfn());
+            existingClient.setEmail(client.getEmail());
+            existingClient.setClienteNombre(client.getClienteNombre());
+            existingClient.setClienteTlfn(client.getClienteTlfn());
 
             clientRepository.save(existingClient);
 

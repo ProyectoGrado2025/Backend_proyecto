@@ -4,10 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import es.daw2.restaurant_V1.services.IFServicioCliente;
-import es.daw2.restaurant_V1.services.IFServicioFactura;
-import es.daw2.restaurant_V1.services.IFServicioPedido;
-import es.daw2.restaurant_V1.services.IFServicioReserva;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioCliente;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioFactura;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioPedido;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioReserva;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;

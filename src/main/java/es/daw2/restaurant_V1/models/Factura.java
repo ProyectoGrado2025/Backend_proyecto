@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -23,16 +25,30 @@ import lombok.NoArgsConstructor;
 public class Factura {
     
     @Id @GeneratedValue
-    private Long factura_id;
+    private Long facturaId;
+
+    // @Column(name = "factura_numero", nullable = false, unique = true)
+    // private String facturaNumero;
 
     @Column(name = "factura_precio", nullable = false, columnDefinition = "INTEGER")
-    private Integer factura_precio;
+    private Integer facturaPrecioTotal;
 
     @Column(name = "factura_fecha", nullable = false, columnDefinition = "DATETIME")
-    private LocalDateTime factura_fecha;
+    private LocalDateTime facturaFecha;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "forma_pago", nullable = false)
+    private FormaPago formaPago;
+
+    public enum FormaPago{
+        EFECTIVO,
+        TARJETA,
+        BIZUM,
+        OTRO
+    }
 
     @OneToOne
-    @JoinColumn(name = "cliente_id")
+    @JoinColumn(name = "cliente_id", nullable = true)
     private Cliente cliente;
 
     @OneToOne

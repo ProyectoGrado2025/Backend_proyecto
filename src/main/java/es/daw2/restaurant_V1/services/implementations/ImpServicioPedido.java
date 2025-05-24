@@ -1,4 +1,4 @@
-package es.daw2.restaurant_V1.services;
+package es.daw2.restaurant_V1.services.implementations;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import es.daw2.restaurant_V1.models.Pedido;
 import es.daw2.restaurant_V1.repositories.PedidoRepositorio;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioPedido;
 
 @Service
 public class ImpServicioPedido implements IFServicioPedido{
@@ -36,15 +37,16 @@ public class ImpServicioPedido implements IFServicioPedido{
 
     @Override
     public boolean updateOrder(Pedido order, Long id) {
-        Optional<Pedido> orderContainer = orderRepository.findById(id);
+        // Optional<Pedido> orderContainer = orderRepository.findById(id);
 
-        if(orderContainer.isPresent()){
-            Pedido existingOrder = orderContainer.get();
-            existingOrder.setPlatos(order.getPlatos());
+        // if(orderContainer.isPresent()){
+        //     Pedido existingOrder = orderContainer.get();
+        //     //existingOrder.setPlatos(order.getPlatos());
 
-            return true;
-        }
-        return false;
+        //     return true;
+        // }
+        // return false;
+        return true;
     }
 
     @Override

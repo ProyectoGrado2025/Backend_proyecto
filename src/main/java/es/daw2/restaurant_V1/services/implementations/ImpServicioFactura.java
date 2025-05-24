@@ -1,4 +1,4 @@
-package es.daw2.restaurant_V1.services;
+package es.daw2.restaurant_V1.services.implementations;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import es.daw2.restaurant_V1.models.Factura;
 import es.daw2.restaurant_V1.repositories.FacturaRepositorio;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioFactura;
 
 @Service
 public class ImpServicioFactura implements IFServicioFactura{
@@ -42,8 +43,8 @@ public class ImpServicioFactura implements IFServicioFactura{
 
             Factura existingInvoice = invoiceContainer.get();
             existingInvoice.setCliente(invoice.getCliente());
-            existingInvoice.setFactura_fecha(invoice.getFactura_fecha());
-            existingInvoice.setFactura_precio(invoice.getFactura_precio());
+            existingInvoice.setFacturaFecha(invoice.getFacturaFecha());
+            existingInvoice.setFacturaPrecioTotal(invoice.getFacturaPrecioTotal());
             existingInvoice.setPedido(invoice.getPedido());
             existingInvoice.setReserva(invoice.getReserva());
 

@@ -1,4 +1,4 @@
-package es.daw2.restaurant_V1.services;
+package es.daw2.restaurant_V1.services.interfaces;
 
 import java.util.ArrayList;
 import java.util.Optional;

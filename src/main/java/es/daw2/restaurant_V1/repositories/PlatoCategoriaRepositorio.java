@@ -3,9 +3,9 @@ package es.daw2.restaurant_V1.repositories;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import es.daw2.restaurant_V1.models.PlatoCategoria;
+import es.daw2.restaurant_V1.models.Categoria;
 
 @Repository
-public interface PlatoCategoriaRepositorio extends CrudRepository<PlatoCategoria, Long>{
+public interface PlatoCategoriaRepositorio extends CrudRepository<Categoria, Long>{
 
 }

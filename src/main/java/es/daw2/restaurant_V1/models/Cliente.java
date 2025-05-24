@@ -22,11 +22,11 @@ public class Cliente {
     private Long id;
 
     @Column(name = "cliente_nombre", nullable = false, columnDefinition = "VARCHAR(45)")
-    private String cliente_nombre;
+    private String clienteNombre;
 
     @Column(name = "cliente_email", nullable = false, columnDefinition =  "VARCHAR(45)")
-    private String cliente_email;
+    private String email;
 
     @Column(name = "cliente_tlfn", nullable = false, columnDefinition = "VARCHAR(45)")
-    private String cliente_tlfn;
+    private String clienteTlfn;
 }

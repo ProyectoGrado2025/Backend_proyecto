@@ -7,10 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.daw2.restaurant_V1.dtos.reservas.ReservaRequest;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateRequest;
 import es.daw2.restaurant_V1.models.Cliente;
 import es.daw2.restaurant_V1.models.Reserva;
-import es.daw2.restaurant_V1.services.IFServicioCliente;
-import es.daw2.restaurant_V1.services.IFServicioReserva;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioCliente;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioReserva;
+import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,13 +32,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class ClientController {
 
     @Autowired
-    IFServicioReserva reservationsService;
+    IFServicioReserva reservaServicio;
     @Autowired
-    IFServicioCliente clientService;
+    IFServicioCliente clienteServicio;
 
     @GetMapping("/getclientreservation/{id}")
     public ResponseEntity<?> getClientReservation(@PathVariable Long id) {
-        Optional<Reserva> reservaContainer = reservationsService.getReservationById(id);
+        Optional<Reserva> reservaContainer = reservaServicio.getReservationById(id);
 
         if (reservaContainer.isPresent()) {
             return ResponseEntity.ok().body(reservaContainer.get());
@@ -45,7 +49,7 @@ public class ClientController {
 
     @GetMapping("/getclient/{id}")
     public ResponseEntity<?> getClient(@PathVariable Long id) {
-        Optional<Cliente> clientContainer = clientService.getClientById(id);
+        Optional<Cliente> clientContainer = clienteServicio.getClientById(id);
 
         if(clientContainer.isPresent()){
             return ResponseEntity.ok().body(clientContainer.get());
@@ -57,7 +61,7 @@ public class ClientController {
 
     @PostMapping("/createclient")
     public ResponseEntity<?> postClient(@RequestBody Cliente client) {
-        boolean created = clientService.createClient(client);
+        boolean created = clienteServicio.createClient(client);
 
         if(created){
             URI location = URI.create("/client/getclient/" + client.getId());
@@ -71,11 +75,11 @@ public class ClientController {
 
     @PostMapping("/createclientreservation")
     public ResponseEntity<?> postClientReservation(@RequestBody Reserva clientReservation) {
-        boolean created = reservationsService.addReservation(clientReservation);
+        boolean created = reservaServicio.addReservation(clientReservation);
 
         if (created) {
             // Suponiendo que la reserva ahora tiene un ID asignado tras ser guardada... ESPEREMOS QUE FUNCIONE
-            URI location = URI.create("/client/getclientreservation/" + clientReservation.getReserva_id());
+            URI location = URI.create("/client/getclientreservation/" + clientReservation.getReservaId());
             return ResponseEntity.created(location).body(clientReservation);
         } else {
             return ResponseEntity.badRequest().body("ERROR AL CREAR LA RESERVA");
@@ -84,7 +88,7 @@ public class ClientController {
 
     @PutMapping("/updateclientreservation/{id}")
     public ResponseEntity<?> putClientReservation(@PathVariable Long id, @RequestBody Reserva clientReservation) {
-        boolean updated = reservationsService.updateReservation(clientReservation, id);
+        boolean updated = reservaServicio.updateReservation(clientReservation, id);
 
         if(updated){
             return ResponseEntity.ok().build();
@@ -95,12 +99,27 @@ public class ClientController {
 
     @DeleteMapping("/deleteclientreservation/{id}")
     public ResponseEntity<?> deleteClientReservation (@PathVariable Long id){
-        boolean deleted = reservationsService.deleteReservation(id);
+        boolean deleted = reservaServicio.deleteReservation(id);
 
         if(deleted){
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+    /**
+     * NUEVOS ENDPOINTS 20/05/2025
+     */
+    @PostMapping("crear-reserva")
+    public ResponseEntity<ReservaResponse> crearReserva(@RequestBody @Valid ReservaRequest reservaRequest) {
+        ReservaResponse reservaResponse = reservaServicio.crearReserva(reservaRequest);
+        URI location = URI.create("/client/getclientreservation/"+reservaResponse.getReservaId());
+        return ResponseEntity.created(location).body(reservaResponse);
+    }
+
+    @PutMapping("actualizar-reserva/{id}")
+    public ResponseEntity<ReservaResponse> actualizarReserva(@PathVariable Long id, @RequestBody @Valid ReservaUpdateRequest reservaUpdateRequest) {
+        ReservaResponse reservaResponse = reservaServicio.actualizarReserva(id, reservaUpdateRequest);
+        return ResponseEntity.ok().body(reservaResponse);
     }
 }
