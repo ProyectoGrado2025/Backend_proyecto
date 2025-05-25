@@ -18,6 +18,7 @@ import es.daw2.restaurant_V1.models.Cliente;
 import es.daw2.restaurant_V1.models.Factura;
 import es.daw2.restaurant_V1.models.Reserva;
 import es.daw2.restaurant_V1.models.Pedido.EstadoPedido;
+import es.daw2.restaurant_V1.models.Reserva.ReservaStatus;
 import es.daw2.restaurant_V1.models.LineaPedido;
 import es.daw2.restaurant_V1.models.Pedido;
 import es.daw2.restaurant_V1.repositories.FacturaRepositorio;
@@ -73,12 +74,14 @@ public class ImpServicioFactura implements IFServicioFactura{
 
         // Eeserva asociada al pedido
         Reserva reservaFromDb = pedidoFacturado.getReserva();
+        reservaFromDb.setReservaStatus(ReservaStatus.EXPIRADA);
+        Reserva reservaActualizada = reservaRepositorio.saveAndFlush(reservaFromDb);
 
         // Cliente asociado desde la reserva
-        Cliente clienteFromDb = reservaFromDb.getCliente();
+        Cliente clienteFromDb = reservaActualizada.getCliente();
 
         // Se asocia la reserva y el cliente a la factura
-        factura.setReserva(reservaFromDb);
+        factura.setReserva(reservaActualizada);
         factura.setCliente(clienteFromDb);
 
         // Forma de pago
