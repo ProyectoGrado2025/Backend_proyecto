@@ -1,16 +1,17 @@
 package es.daw2.restaurant_V1.services.interfaces;
 
-import java.util.ArrayList;
-import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import es.daw2.restaurant_V1.models.Plato;
+import es.daw2.restaurant_V1.dtos.platos.PlatoRequest;
+import es.daw2.restaurant_V1.dtos.platos.PlatoResponse;
 
 public interface IFServicioPlato {
-
-    // Métodos a implementar
-    public abstract ArrayList<Plato> getDishes();
-    public abstract Optional<Plato> getDishById(Long id);
-    public abstract boolean addDish(Plato dish);
-    public abstract boolean updateDish(Plato dish, Long id);
-    public abstract boolean deleteDish(Long id);
+    /*
+     * NUEVAS IMPLEMENTACIONES
+     */
+    public abstract Page<PlatoResponse> getAllPlatos(Pageable pageable);
+    public abstract PlatoResponse getPlatoById(Long id);
+    public abstract PlatoResponse crearPlato (PlatoRequest platoRequest);
+    public abstract PlatoResponse actualizarPlato (Long id, PlatoRequest platoRequest);
 }

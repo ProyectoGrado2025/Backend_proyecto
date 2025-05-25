@@ -2,16 +2,17 @@ package es.daw2.restaurant_V1.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import es.daw2.restaurant_V1.models.Mesa;
 
 @Repository
-public interface MesaRepositorio extends CrudRepository<Mesa, Long> {
+public interface MesaRepositorio extends JpaRepository<Mesa, Long> {
 
     @Query("""
         SELECT m 
@@ -30,4 +31,6 @@ public interface MesaRepositorio extends CrudRepository<Mesa, Long> {
         @Param("reservaFecha") LocalDateTime reservaFecha,
         @Param("reservaFin") LocalDateTime reservaFin
     );
+
+    Optional<Mesa> findByMesaNumero(Integer mesaNumero);
 }

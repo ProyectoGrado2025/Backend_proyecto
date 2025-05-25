@@ -2,10 +2,11 @@ package es.daw2.restaurant_V1.services.implementations;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import es.daw2.restaurant_V1.dtos.categoria.CategoriaRequest;
@@ -13,7 +14,7 @@ import es.daw2.restaurant_V1.dtos.categoria.CategoriaResponse;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.models.Categoria;
 import es.daw2.restaurant_V1.models.Plato;
-import es.daw2.restaurant_V1.repositories.PlatoCategoriaRepositorio;
+import es.daw2.restaurant_V1.repositories.CategoriaRepositorio;
 import es.daw2.restaurant_V1.repositories.PlatoRepositorio;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioCategoria;
 
@@ -21,56 +22,27 @@ import es.daw2.restaurant_V1.services.interfaces.IFServicioCategoria;
 public class ImpServicioCategoria implements IFServicioCategoria{
 
     @Autowired
-    PlatoCategoriaRepositorio categoriaRepositorio;
+    CategoriaRepositorio categoriaRepositorio;
     @Autowired
     PlatoRepositorio platoRepositorio;
 
-
     @Override
-    public ArrayList<Categoria> getCategories() {
-        return (ArrayList<Categoria>) categoriaRepositorio.findAll();
+    public Page<CategoriaResponse> getAllCategorias (Pageable pageable){
+        return categoriaRepositorio.findAll(pageable)
+                .map(this::composeCategoriaResponse);
     }
 
     @Override
-    public Optional<Categoria> getCategoryById(Long id) {
-        return categoriaRepositorio.findById(id);
+    public CategoriaResponse getCategoriaById(Long id) {
+        Categoria categoriaFromDb = categoriaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con ID: " + id));
+
+        return composeCategoriaResponse(categoriaFromDb);
     }
-
-    @Override
-    public boolean addCategory(Categoria category) {
-        if(category != null){
-            categoriaRepositorio.save(category);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean updateCategory(Categoria category, Long id) {
-        Optional<Categoria> categoryContainer = categoriaRepositorio.findById(id);
-
-        if(categoryContainer.isPresent()){
-            Categoria existingCategory = categoryContainer.get();
-            existingCategory.setCategoriaNombre(category.getCategoriaNombre());
-
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean deleteCategory(Long id) {
-        Optional<Categoria> categoryContainer = categoriaRepositorio.findById(id);
-        
-        if(categoryContainer.isPresent()){
-            categoriaRepositorio.deleteById(id);
-
-            return true;
-        }
-        return false;
-    }
-
-    //Nuevas IMPLEMENTACIONES
+    /**
+     * PUEDES CREAR UNA CATEGORÍA SOLA, ES DECIR, SIN PLATOS
+     * PUEDES CREAR UNA CATEGORÍA EN LA QUE SE INCLUYEN TODOS LOS PLATOS INDICANDO LOS IDs
+     */
     @Override
     public CategoriaResponse crearCategoria (CategoriaRequest categoriaRequest){
 
@@ -85,9 +57,15 @@ public class ImpServicioCategoria implements IFServicioCategoria{
 
         categoria.setPlatos(platos);
 
-        return createCategoriaResponse(categoria);
+        return composeCategoriaResponse(categoria);
     }
 
+    /**
+     * PARA ACTUALIZAR UNA CATEGORÍA, COMO MÁXIMO PUEDES ENVIAR:
+     *  - NOMBRE
+     *  - DESCRIPCIÓN
+     *  - LISTA NUEVA DE PLATOS
+     */
     @Override 
     public CategoriaResponse actualizarCategoria(Long categoriaId, CategoriaRequest categoriaRequest){
         Categoria categoriaFromDb = categoriaRepositorio.findById(categoriaId)
@@ -114,10 +92,10 @@ public class ImpServicioCategoria implements IFServicioCategoria{
 
         Categoria categoriaActualizada = categoriaRepositorio.save(categoriaFromDb);
 
-        return createCategoriaResponse(categoriaActualizada);
+        return composeCategoriaResponse(categoriaActualizada);
     }
 
-    private CategoriaResponse createCategoriaResponse(Categoria categoria) {
+    private CategoriaResponse composeCategoriaResponse(Categoria categoria) {
         CategoriaResponse categoriaResponse = new CategoriaResponse();
         categoriaResponse.setCategoriaId(categoria.getCategoriaId());
         categoriaResponse.setCategoriaNombre(categoria.getCategoriaNombre());

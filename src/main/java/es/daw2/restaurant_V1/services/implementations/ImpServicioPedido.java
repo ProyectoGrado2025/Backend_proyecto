@@ -1,62 +1,78 @@
 package es.daw2.restaurant_V1.services.implementations;
 
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import es.daw2.restaurant_V1.dtos.LineasPedido.LineaPedidoResponse;
+import es.daw2.restaurant_V1.dtos.pedidos.PedidoRequest;
+import es.daw2.restaurant_V1.dtos.pedidos.PedidoResponse;
+import es.daw2.restaurant_V1.models.LineaPedido;
 import es.daw2.restaurant_V1.models.Pedido;
+import es.daw2.restaurant_V1.models.Reserva;
 import es.daw2.restaurant_V1.repositories.PedidoRepositorio;
+import es.daw2.restaurant_V1.repositories.ReservaRepositorio;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioLineaPedido;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioPedido;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class ImpServicioPedido implements IFServicioPedido{
 
     @Autowired
-    PedidoRepositorio orderRepository;
+    PedidoRepositorio pedidoRepositorio;
+    @Autowired
+    ReservaRepositorio reservaRepositorio;
+    @Autowired
+    IFServicioLineaPedido servicioLineaPedido;
+
 
     @Override
-    public ArrayList<Pedido> getOrders() {
-        return (ArrayList<Pedido>) orderRepository.findAll();
+    public Page<PedidoResponse> getAllPedidos(Pageable pageable) {
+        return pedidoRepositorio.findAll(pageable)
+                .map(this::composePedidoResponse);
     }
 
     @Override
-    public Optional<Pedido> getOrderById(Long id) {
-        return orderRepository.findById(id);
+    public PedidoResponse getPedidoById(Long id) {
+        Pedido pedido = pedidoRepositorio.findById(id)
+                .orElseThrow(()->new EntityNotFoundException("Pedido no encontrado con ID: "+id));
+        return composePedidoResponse(pedido);
     }
 
     @Override
-    public boolean createOrder(Pedido order) {
-        if(order != null){
-            orderRepository.save(order);
-            return true;
-        }
-        return false;
+    @Transactional
+    public PedidoResponse crearPedido(PedidoRequest pedidoRequest) {
+        // Se busca la reserva asociada
+        Reserva reservaFromDb = reservaRepositorio.findById(pedidoRequest.getReservaId())
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + pedidoRequest.getReservaId()));
+
+        // Se crea el  nuevo pedido y se le asigna la reserva
+        Pedido pedido = new Pedido();
+        pedido.setReserva(reservaFromDb);
+
+        // Se crean las  líneas de pedido y se asignan al pedido
+        List<LineaPedido> lineasPedido = servicioLineaPedido.crearLineaPedido(pedidoRequest.getLineasPedido(), pedido);
+        pedido.setLineasPedido(lineasPedido);
+
+        // Se guarda el pedido
+        Pedido pedidoGuardado = pedidoRepositorio.save(pedido);
+
+        return composePedidoResponse(pedidoGuardado);
     }
 
-    @Override
-    public boolean updateOrder(Pedido order, Long id) {
-        // Optional<Pedido> orderContainer = orderRepository.findById(id);
+    private PedidoResponse composePedidoResponse(Pedido pedidoGuardado) {
+        PedidoResponse pedidoResponse = new PedidoResponse();
+        pedidoResponse.setPedidoId(pedidoGuardado.getPedidoId());
 
-        // if(orderContainer.isPresent()){
-        //     Pedido existingOrder = orderContainer.get();
-        //     //existingOrder.setPlatos(order.getPlatos());
+        // Se transforme las líneas de pedido a DTOs
+        List<LineaPedidoResponse> lineaPedidoResponses = servicioLineaPedido.crearLineaPedidoResponse(pedidoGuardado.getLineasPedido());
+        pedidoResponse.setLineasPedidoResponse(lineaPedidoResponses);
 
-        //     return true;
-        // }
-        // return false;
-        return true;
-    }
-
-    @Override
-    public boolean deleteOrder(Long id) {
-        Optional<Pedido> orderContainer = orderRepository.findById(id);
-
-        if(orderContainer.isPresent()){
-            orderRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        return pedidoResponse;
     }
 }

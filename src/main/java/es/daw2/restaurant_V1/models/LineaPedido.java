@@ -35,7 +35,7 @@ public class LineaPedido {
     private BigDecimal precioUnitario;
 
     public BigDecimal getPrecioTotal() {
-        return precioUnitario.multiply(BigDecimal.valueOf(cantidad));
+        return this.precioUnitario.multiply(BigDecimal.valueOf(cantidad));
     }
 }
 

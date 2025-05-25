@@ -20,6 +20,25 @@ import jakarta.servlet.http.HttpServletRequest;
 public class GlobalExceptionHandler {
 
     /**
+     * Maneja excepciones lanzadas cuando una operación no es válida
+     * debido al estado actual del recurso o entidad.
+     * Responde con un estado HTTP 409 (Conflict).
+     *
+     * @param exception La excepción lanzada cuando la operación es inválida
+     * @param httpServletRequest Información de la petición HTTP que causó la excepción
+     * @return ResponseEntity con detalles de la excepción y código HTTP 409
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<?> handlerIllegalStateException(IllegalStateException exception, HttpServletRequest httpServletRequest) {
+        ExceptionResponse exceptionResponse = buildExceptionResponse(
+            exception,
+            httpServletRequest,
+            HttpStatus.CONFLICT
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exceptionResponse);
+    }
+
+    /**
      * Maneja excepciones lanzadas cuando no se encuentra una entidad en la base de datos
      * Responde con un estado HTTP 404 (Not Found)
      * 

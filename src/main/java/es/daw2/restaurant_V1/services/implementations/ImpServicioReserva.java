@@ -4,10 +4,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import es.daw2.restaurant_V1.dtos.reservas.ReservaRequest;
@@ -41,54 +42,19 @@ public class ImpServicioReserva implements IFServicioReserva{
     private static final Duration DURACION_RESERVA = Duration.ofHours(2);
 
     @Override
-    public ArrayList<Reserva> getReservations() {
-        return (ArrayList<Reserva>) reservaRepositorio.findAll();
+    public Page<ReservaResponse> getAllReservas(Pageable pageable) {
+        return reservaRepositorio.findAll(pageable)
+                .map(this::composeReservaResponse);
     }
-
+    
     @Override
-    public Optional<Reserva> getReservationById(Long id) {
-        return reservaRepositorio.findById(id);
+    public ReservaResponse findReservaById(Long id) {
+        Reserva reservaFromDb = reservaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
+
+        return composeReservaResponse(reservaFromDb);
     }
 
-    @Override
-    public boolean addReservation(Reserva reservation) {
-        if(reservation != null){
-            reservaRepositorio.save(reservation);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean updateReservation(Reserva reservation, Long id) {
-        Optional<Reserva> reservationContainer = reservaRepositorio.findById(id);
-
-        if(reservationContainer.isPresent()){
-            Reserva existingReservation = reservationContainer.get();
-            existingReservation.setNumeroPersonas(reservation.getNumeroPersonas());
-            existingReservation.setReservaFecha(reservation.getReservaFecha());
-            reservaRepositorio.save(existingReservation);
-
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean deleteReservation(Long id) {
-        Optional<Reserva> reservationContainer = reservaRepositorio.findById(id);
-
-        if(reservationContainer.isPresent()){
-            reservaRepositorio.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * NUEVAS IMPLEMENTACIONES
-     * MEJORES IMPLEMENTACIONES
-     */
     @Override
     public ReservaResponse crearReserva (ReservaRequest reservaRequest){
         Cliente clienteFromDb = clienteRepositorio.findByEmail(reservaRequest.getClienteEmail())
@@ -132,37 +98,10 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         Reserva reservaGuardada = reservaRepositorio.save(reserva);
 
-        return createReservaResponse(reservaGuardada);
+        return composeReservaResponse(reservaGuardada);
     }
 
-    private ReservaResponse createReservaResponse(Reserva reservaGuardada) {
-        ReservaResponse reservaResponse = new ReservaResponse();
-        reservaResponse.setReservaId(reservaGuardada.getReservaId());
-        reservaResponse.setReservaFecha(reservaGuardada.getReservaFecha());
-        reservaResponse.setReservaFin(reservaGuardada.getReservaFin());
-        reservaResponse.setNumeroPersonas(reservaGuardada.getNumeroPersonas());
-        reservaResponse.setReservaStatus(reservaGuardada.getReservaStatus().name());
-
-        Mesa mesa = reservaGuardada.getMesa();
-        reservaResponse.setMesaId(mesa.getMesaId());
-        reservaResponse.setMesaNumero(mesa.getMesaNumero());
-        reservaResponse.setMesaCapacidad(mesa.getMesaCapacidad());
-
-        Cliente cliente = reservaGuardada.getCliente();
-        reservaResponse.setClienteNombre(cliente.getClienteNombre());
-        reservaResponse.setClienteEmail(cliente.getEmail());
-
-        if(reservaGuardada.getAlergenos() != null){
-            List<String> alergenosNombres = reservaGuardada.getAlergenos().stream()
-                .map(Alergeno::getNombreAlergeno)
-                .collect(Collectors.toList());
-            reservaResponse.setAlergenos(alergenosNombres);
-        }
-
-        return reservaResponse;
-    }
-
-    @Override
+        @Override
     @Transactional
     public ReservaResponse actualizarReserva(Long reservaId, ReservaUpdateRequest reservaUpdateRequest) {
         Reserva reservaFromDb = reservaRepositorio.findById(reservaId)
@@ -217,6 +156,35 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         Reserva reservaActualizada = reservaRepositorio.save(reservaFromDb);
 
-        return createReservaResponse(reservaActualizada);
+        return composeReservaResponse(reservaActualizada);
     }
+
+    private ReservaResponse composeReservaResponse(Reserva reservaGuardada) {
+        ReservaResponse reservaResponse = new ReservaResponse();
+        reservaResponse.setReservaId(reservaGuardada.getReservaId());
+        reservaResponse.setReservaFecha(reservaGuardada.getReservaFecha());
+        reservaResponse.setReservaFin(reservaGuardada.getReservaFin());
+        reservaResponse.setNumeroPersonas(reservaGuardada.getNumeroPersonas());
+        reservaResponse.setReservaStatus(reservaGuardada.getReservaStatus().name());
+
+        Mesa mesa = reservaGuardada.getMesa();
+        reservaResponse.setMesaId(mesa.getMesaId());
+        reservaResponse.setMesaNumero(mesa.getMesaNumero());
+        reservaResponse.setMesaCapacidad(mesa.getMesaCapacidad());
+
+        Cliente cliente = reservaGuardada.getCliente();
+        reservaResponse.setClienteNombre(cliente.getClienteNombre());
+        reservaResponse.setClienteEmail(cliente.getEmail());
+
+        if(reservaGuardada.getAlergenos() != null){
+            List<String> alergenosNombres = reservaGuardada.getAlergenos().stream()
+                .map(Alergeno::getNombreAlergeno)
+                .collect(Collectors.toList());
+            reservaResponse.setAlergenos(alergenosNombres);
+        }
+
+        return reservaResponse;
+    }
+
+
 }

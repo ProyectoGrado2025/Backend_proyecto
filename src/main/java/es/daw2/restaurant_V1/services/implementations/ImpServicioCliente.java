@@ -1,11 +1,12 @@
 package es.daw2.restaurant_V1.services.implementations;
 
-import java.util.ArrayList;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import es.daw2.restaurant_V1.dtos.clientes.ClienteResponse;
+import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.models.Cliente;
 import es.daw2.restaurant_V1.repositories.ClienteRepositorio;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioCliente;
@@ -17,58 +18,25 @@ public class ImpServicioCliente implements IFServicioCliente {
     ClienteRepositorio clientRepository;
 
     @Override
-    public ArrayList<Cliente> getClients() {
-        return (ArrayList<Cliente>) clientRepository.findAll();
+    public Page<ClienteResponse> getAllClientes(Pageable pageable) {
+        return clientRepository.findAll(pageable)
+                .map(this::composeClienteResponse);
     }
 
     @Override
-    public Optional<Cliente> getClientById(Long id) {
-        return clientRepository.findById(id);
+    public ClienteResponse getClienteById(Long id) {
+        Cliente cliente = clientRepository.findById(id)
+                .orElseThrow(()->new EntityNotFoundException("Cliente no encontrado con ID: " + id));
+        return composeClienteResponse(cliente);
     }
 
-    @Override
-    public boolean createClient(Cliente client) {
-        if(client != null){
-            clientRepository.save(client);
-            return true;
-        }
-        return false;
-    }
+    private ClienteResponse composeClienteResponse (Cliente cliente){
+        ClienteResponse clienteResponse = new ClienteResponse();
+        clienteResponse.setClienteId(cliente.getId());
+        clienteResponse.setEmailCliente(cliente.getEmail());
+        clienteResponse.setNombreCliente(cliente.getClienteNombre());
+        clienteResponse.setNumeroCliente(cliente.getClienteTlfn());
 
-    @Override
-    public boolean updateClient(Cliente client, Long id) {
-
-        // Se buca al cliente a actualizar por su ID
-        Optional<Cliente> clientContainer = clientRepository.findById(id);
-
-        // Si en la clase contenedora hay un objeto de tipo "Cliente"
-        if(clientContainer.isPresent()){
-
-            // Se accede a la clase contenida y se actualizan los datos
-            Cliente existingClient = clientContainer.get();
-            existingClient.setEmail(client.getEmail());
-            existingClient.setClienteNombre(client.getClienteNombre());
-            existingClient.setClienteTlfn(client.getClienteTlfn());
-
-            clientRepository.save(existingClient);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean deleteCliente(Long id) {
-        
-        Optional<Cliente> clientContainer = clientRepository.findById(id);
-
-        if(clientContainer.isPresent()){
-            clientRepository.deleteById(id);
-
-            return true;
-        }
-
-        return false;
+        return clienteResponse;
     }
 }
