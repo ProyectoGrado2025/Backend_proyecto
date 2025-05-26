@@ -1,7 +1,5 @@
 package es.daw2.restaurant_V1.services.implementations;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,12 +9,13 @@ import es.daw2.restaurant_V1.dtos.mesas.MesaRequest;
 import es.daw2.restaurant_V1.dtos.mesas.MesaResponse;
 import es.daw2.restaurant_V1.dtos.mesas.MesaUpdateRequest;
 import es.daw2.restaurant_V1.models.Mesa;
-import es.daw2.restaurant_V1.models.Reserva;
 import es.daw2.restaurant_V1.models.Mesa.MesaStatus;
 import es.daw2.restaurant_V1.repositories.MesaRepositorio;
 import es.daw2.restaurant_V1.repositories.ReservaRepositorio;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioMesa;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.NonNull;
 
@@ -27,6 +26,8 @@ public class ImpServicioMesa implements IFServicioMesa{
     MesaRepositorio mesaRepositorio;
     @Autowired
     ReservaRepositorio reservaRepositorio;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public Page<MesaResponse> getAllMesas(Pageable pageable) {
@@ -70,36 +71,31 @@ public class ImpServicioMesa implements IFServicioMesa{
 
     @Override
     @Transactional
-    public MesaResponse intercambiarNumeroMesa(Long id, MesaUpdateRequest mesaUpdateRequest){
+    public MesaResponse intercambiarNumeroMesa(Long id, MesaUpdateRequest mesaUpdateRequest) {
+
         Mesa mesaA = mesaRepositorio.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Mesa no encontrada con ID: " + id));
-        
+                .orElseThrow(() -> new EntityNotFoundException("Mesa no encontrada con ID: " + id));
+
         Mesa mesaB = mesaRepositorio.findByMesaNumero(mesaUpdateRequest.getNuevoMesaNumero())
                 .orElseThrow(() -> new EntityNotFoundException("No existe ninguna mesa con el número: " + mesaUpdateRequest.getNuevoMesaNumero()));
+
+        Long idMesaA = mesaA.getMesaId();
+        Long idMesaB = mesaB.getMesaId();
 
         Integer numeroMesaA = mesaA.getMesaNumero();
         Integer numeroMesaB = mesaB.getMesaNumero();
 
-        mesaA.setMesaNumero(-1);
-        mesaRepositorio.save(mesaA);
+        mesaRepositorio.actualizarNumeroMesa(idMesaA, -9999);
+        mesaRepositorio.actualizarNumeroMesa(idMesaB, numeroMesaA);
+        mesaRepositorio.actualizarNumeroMesa(idMesaA, numeroMesaB);
 
-        mesaB.setMesaNumero(numeroMesaA);
-        mesaRepositorio.save(mesaB);
+        entityManager.flush();
+        entityManager.clear();
 
-        mesaA.setMesaNumero(numeroMesaB);
-        mesaRepositorio.save(mesaA);
-
-        List<Reserva> reservasA = reservaRepositorio.findByMesa(mesaA);
-        List<Reserva> reservasB = reservaRepositorio.findByMesa(mesaB);
-
-        for (Reserva r : reservasA){
-            r.setMesa(mesaA);
-        }
-        for(Reserva r : reservasB){
-            r.setMesa(mesaB);
-        }
-        reservaRepositorio.saveAll(reservasA);
-        reservaRepositorio.saveAll(reservasB);
+        mesaA = mesaRepositorio.findById(idMesaA)
+                .orElseThrow(() -> new EntityNotFoundException("Error al recuperar mesaA"));
+        mesaB = mesaRepositorio.findById(idMesaB)
+                .orElseThrow(() -> new EntityNotFoundException("Error al recuperar mesaB"));
 
         return composeMesaResponse(mesaA);
     }

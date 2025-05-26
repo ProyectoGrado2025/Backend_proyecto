@@ -60,7 +60,7 @@ public class ImpServicioFactura implements IFServicioFactura{
     public FacturaResponse crearFactura(FacturaRequest facturaRequest) {
         Factura factura = new Factura();
 
-        // Pedido asociado desde la base de datos, excepción si no existe
+        // pedido asociado desde la base de datos, excepción si no existe
         Pedido pedidoFromDb = pedidoRepositorio.findById(facturaRequest.getPedidoId())
                 .orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado con ID: " + facturaRequest.getPedidoId()));
 
@@ -68,43 +68,40 @@ public class ImpServicioFactura implements IFServicioFactura{
             throw new IllegalStateException("El pedido ya ha sido facturado y no se puede modificar.");
         }
 
-        // Se marca el pedido como facturado y se guarda el cambio
+        // se marca el pedido como facturado y se guarda el cambio
         pedidoFromDb.setEstado(EstadoPedido.FACTURADO);
         Pedido pedidoFacturado = pedidoRepositorio.saveAndFlush(pedidoFromDb);;
 
-        // Eeserva asociada al pedido
+        // reserva asociada al pedido
         Reserva reservaFromDb = pedidoFacturado.getReserva();
         reservaFromDb.setReservaStatus(ReservaStatus.EXPIRADA);
         Reserva reservaActualizada = reservaRepositorio.saveAndFlush(reservaFromDb);
 
-        // Cliente asociado desde la reserva
+        // cliente asociado desde la reserva
         Cliente clienteFromDb = reservaActualizada.getCliente();
 
-        // Se asocia la reserva y el cliente a la factura
+        // se asocia la reserva y el cliente a la factura
         factura.setReserva(reservaActualizada);
         factura.setCliente(clienteFromDb);
 
-        // Forma de pago
+        // forma de pago
         factura.setFormaPago(facturaRequest.getFormaPago());
 
-        // Fecha actual a la factura
+        // fecha actual a la factura
         factura.setFacturaFecha(LocalDateTime.now());
 
-        // Pedido facturado a la factura
+        // pedido facturado a la factura
         factura.setPedido(pedidoFacturado);
 
-        // Calculo del precio total sumando los precios de cada línea del pedido
+        // calculo del precio total sumando los precios de cada línea del pedido
         BigDecimal precioTotal = pedidoFacturado.getLineasPedido().stream()
                 .map(LineaPedido::getPrecioTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Precio total a la factura
         factura.setFacturaPrecioTotal(precioTotal);
 
-        // Se guarda y registra la factura
         Factura facturaGuardada = facturaRepositorio.save(factura);
 
-        // DTO con datos de la factura guardada
         return composeFacturaResponse(facturaGuardada);
     }
 
@@ -114,6 +111,7 @@ public class ImpServicioFactura implements IFServicioFactura{
         // --- Datos del Cliente ---
         Cliente clienteFromFactura = facturaGuardada.getCliente();
         ClienteResponse clienteResponse = new ClienteResponse();
+        clienteResponse.setClienteId(clienteFromFactura.getId());
         clienteResponse.setNombreCliente(clienteFromFactura.getClienteNombre());
         clienteResponse.setEmailCliente(clienteFromFactura.getEmail());
         clienteResponse.setNumeroCliente(clienteFromFactura.getClienteTlfn());

@@ -39,54 +39,82 @@ public class ImpServicioCategoria implements IFServicioCategoria{
 
         return composeCategoriaResponse(categoriaFromDb);
     }
-    /**
-     * PUEDES CREAR UNA CATEGORÍA SOLA, ES DECIR, SIN PLATOS
-     * PUEDES CREAR UNA CATEGORÍA EN LA QUE SE INCLUYEN TODOS LOS PLATOS INDICANDO LOS IDs
-     */
+    
     @Override
-    public CategoriaResponse crearCategoria (CategoriaRequest categoriaRequest){
+    public CategoriaResponse crearCategoria(CategoriaRequest categoriaRequest) {
 
         Categoria categoria = new Categoria();
         categoria.setCategoriaNombre(categoriaRequest.getNombreCategoria());
         categoria.setDescripcion(categoriaRequest.getDescripcion());
 
         List<Plato> platos = new ArrayList<>();
-        if(categoriaRequest.getPlatosIds() != null && !categoriaRequest.getPlatosIds().isEmpty()){
+        if (categoriaRequest.getPlatosIds() != null && !categoriaRequest.getPlatosIds().isEmpty()) {
             platos = platoRepositorio.findAllById(categoriaRequest.getPlatosIds());
-        }
 
+            // se sincroniza la relación desde Plato a Categoria
+            for (Plato p : platos) {
+                if (p.getCategorias() == null) {
+                    p.setCategorias(new ArrayList<>());
+                }
+                if (!p.getCategorias().contains(categoria)) {
+                    p.getCategorias().add(categoria);
+                }
+            }
+        }
         categoria.setPlatos(platos);
 
-        return composeCategoriaResponse(categoria);
+        // se guarda la categoría primero para tener ID si hace falta
+        Categoria categoriaGuardada = categoriaRepositorio.save(categoria);
+
+        // se guardan los platos actualizados con la relación
+        for (Plato p : platos) {
+            platoRepositorio.save(p);
+        }
+
+        return composeCategoriaResponse(categoriaGuardada);
     }
 
-    /**
-     * PARA ACTUALIZAR UNA CATEGORÍA, COMO MÁXIMO PUEDES ENVIAR:
-     *  - NOMBRE
-     *  - DESCRIPCIÓN
-     *  - LISTA NUEVA DE PLATOS
-     */
-    @Override 
-    public CategoriaResponse actualizarCategoria(Long categoriaId, CategoriaRequest categoriaRequest){
-        Categoria categoriaFromDb = categoriaRepositorio.findById(categoriaId)
-                .orElseThrow(()->new EntityNotFoundException("Categoria no encontrada con ID: " + categoriaId));
 
-        if(categoriaRequest.getNombreCategoria() != null){
-            if(!categoriaFromDb.getCategoriaNombre().equalsIgnoreCase(categoriaRequest.getNombreCategoria())){
+    @Override
+    public CategoriaResponse actualizarCategoria(Long categoriaId, CategoriaRequest categoriaRequest) {
+        Categoria categoriaFromDb = categoriaRepositorio.findById(categoriaId)
+                .orElseThrow(() -> new EntityNotFoundException("Categoria no encontrada con ID: " + categoriaId));
+
+        if (categoriaRequest.getNombreCategoria() != null) {
+            if (!categoriaFromDb.getCategoriaNombre().equalsIgnoreCase(categoriaRequest.getNombreCategoria())) {
                 categoriaFromDb.setCategoriaNombre(categoriaRequest.getNombreCategoria());
             }
         }
 
-        if(categoriaRequest.getDescripcion() != null){
+        if (categoriaRequest.getDescripcion() != null) {
             categoriaFromDb.setDescripcion(categoriaRequest.getDescripcion());
         }
 
-        if(categoriaRequest.getPlatosIds() != null){
-            if(categoriaRequest.getPlatosIds().isEmpty()){
+        if (categoriaRequest.getPlatosIds() != null) {
+            // se quita la categoría de los platos antiguos
+            for (Plato p : categoriaFromDb.getPlatos()) {
+                if (p.getCategorias() != null) {
+                    p.getCategorias().remove(categoriaFromDb);
+                    platoRepositorio.save(p);
+                }
+            }
+
+            if (categoriaRequest.getPlatosIds().isEmpty()) {
                 categoriaFromDb.getPlatos().clear();
             } else {
                 List<Plato> nuevosPlatos = platoRepositorio.findAllById(categoriaRequest.getPlatosIds());
                 categoriaFromDb.setPlatos(nuevosPlatos);
+
+                // se añade la categoría en los platos nuevos
+                for (Plato p : nuevosPlatos) {
+                    if (p.getCategorias() == null) {
+                        p.setCategorias(new ArrayList<>());
+                    }
+                    if (!p.getCategorias().contains(categoriaFromDb)) {
+                        p.getCategorias().add(categoriaFromDb);
+                    }
+                    platoRepositorio.save(p);
+                }
             }
         }
 
@@ -110,5 +138,4 @@ public class ImpServicioCategoria implements IFServicioCategoria{
         }
         return categoriaResponse;
     }
-
 }

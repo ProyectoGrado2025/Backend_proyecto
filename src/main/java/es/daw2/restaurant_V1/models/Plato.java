@@ -22,10 +22,10 @@ public class Plato {
     @Column(name = "plato_id")
     private Long platoId;
 
-    @Column(name = "plato_nombre", nullable = false, length = 45)
+    @Column(name = "plato_nombre", nullable = false, length = 150)
     private String platoNombre;
 
-    @Column(name = "plato_descripcion", nullable = false, length = 200)
+    @Column(name = "plato_descripcion", nullable = false, length = 300)
     private String platoDescripcion;
 
     @Column(name = "plato_precio", nullable = false, columnDefinition = "DECIMAL(10,2)")
