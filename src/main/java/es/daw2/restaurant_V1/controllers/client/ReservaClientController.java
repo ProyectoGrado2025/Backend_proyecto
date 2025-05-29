@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.daw2.restaurant_V1.config.ClienteServiceGroup;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaCancelRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateRequest;
@@ -26,7 +27,7 @@ public class ReservaClientController {
     private ClienteServiceGroup servicios;
 
     @GetMapping("/reservas/detalle/{id}")
-    public ResponseEntity<ReservaResponse> getMesaById (@PathVariable Long id) {
+    public ResponseEntity<ReservaResponse> getReservaById (@PathVariable Long id) {
         return ResponseEntity.ok().body(servicios.RESERVA.findReservaById(id));
     }
 
@@ -40,6 +41,12 @@ public class ReservaClientController {
     @PutMapping("/reservas/{id}/actualizar")
     public ResponseEntity<ReservaResponse> actualizarReserva(@PathVariable Long id, @RequestBody @Valid ReservaUpdateRequest reservaUpdateRequest) {
         ReservaResponse reservaResponse = servicios.RESERVA.actualizarReserva(id, reservaUpdateRequest);
+        return ResponseEntity.ok().body(reservaResponse);
+    }
+
+    @PutMapping("reservas/{id}/cancelar")
+    public ResponseEntity<ReservaResponse> cancelarReservaByClient (@PathVariable Long id, @RequestBody ReservaCancelRequest reservaCancelRequest) {
+        ReservaResponse reservaResponse = servicios.RESERVA.cancelarReservaByClient(id, reservaCancelRequest);
         return ResponseEntity.ok().body(reservaResponse);
     }
 }

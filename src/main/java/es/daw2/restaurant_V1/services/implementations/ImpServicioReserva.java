@@ -1,29 +1,37 @@
 package es.daw2.restaurant_V1.services.implementations;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import es.daw2.restaurant_V1.dtos.reservas.ReservaCancelRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateRequest;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.exceptions.custom.NoTablesAvailableException;
+import es.daw2.restaurant_V1.exceptions.custom.ReservaFechaPasadaException;
 import es.daw2.restaurant_V1.models.Alergeno;
 import es.daw2.restaurant_V1.models.Cliente;
 import es.daw2.restaurant_V1.models.Mesa;
 import es.daw2.restaurant_V1.models.Reserva;
+import es.daw2.restaurant_V1.models.Reserva.ReservaStatus;
 import es.daw2.restaurant_V1.repositories.AlergenoRepositorio;
 import es.daw2.restaurant_V1.repositories.ClienteRepositorio;
 import es.daw2.restaurant_V1.repositories.MesaRepositorio;
 import es.daw2.restaurant_V1.repositories.ReservaRepositorio;
+import es.daw2.restaurant_V1.services.email.EmailClient;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioReserva;
 import jakarta.transaction.Transactional;
 
@@ -38,15 +46,28 @@ public class ImpServicioReserva implements IFServicioReserva{
     ClienteRepositorio clienteRepositorio;
     @Autowired
     AlergenoRepositorio alergenoRepositorio;
+    @Autowired
+    EmailClient emailClient;
 
-    private static final Duration DURACION_RESERVA = Duration.ofHours(2);
+    private static final Logger log = LoggerFactory.getLogger(ImpServicioReserva.class);
+    private static final Duration DURACION_RESERVA = Duration.ofHours(1).plusMinutes(55);
 
     @Override
     public Page<ReservaResponse> getAllReservas(Pageable pageable) {
         return reservaRepositorio.findAll(pageable)
                 .map(this::composeReservaResponse);
     }
-    
+
+    @Override
+    public Page<ReservaResponse> getTodayReservas(Pageable pageable){
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();
+
+        Page<Reserva> reservas = reservaRepositorio.findByReservaFechaBetween(startOfDay, endOfDay, pageable);
+        return reservas.map(this::composeReservaResponse);
+    }
+
     @Override
     public ReservaResponse findReservaById(Long id) {
         Reserva reservaFromDb = reservaRepositorio.findById(id)
@@ -57,6 +78,11 @@ public class ImpServicioReserva implements IFServicioReserva{
 
     @Override
     public ReservaResponse crearReserva (ReservaRequest reservaRequest){
+
+        if (reservaRequest.getReservaFecha().isBefore(LocalDateTime.now())) {
+            throw new ReservaFechaPasadaException("La fecha de la reserva no puede ser anterior a la fecha de hoy");
+        }
+        
         Cliente clienteFromDb = clienteRepositorio.findByEmail(reservaRequest.getClienteEmail())
             .orElseGet( ()-> {
                     Cliente nuevoCliente = new Cliente();
@@ -98,12 +124,21 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         Reserva reservaGuardada = reservaRepositorio.save(reserva);
 
-        return composeReservaResponse(reservaGuardada);
+        ReservaResponse reservaResponse = composeReservaResponse(reservaGuardada);
+
+        emailClient.sendConfirmationEmail(reservaResponse);
+
+        return reservaResponse;
     }
 
-        @Override
+    @Override
     @Transactional
     public ReservaResponse actualizarReserva(Long reservaId, ReservaUpdateRequest reservaUpdateRequest) {
+
+        if (reservaUpdateRequest.getNuevaFecha().isBefore(LocalDateTime.now())) {
+            throw new ReservaFechaPasadaException("La fecha de la reserva no puede ser anterior a la fecha de hoy");
+        }
+
         Reserva reservaFromDb = reservaRepositorio.findById(reservaId)
                 .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + reservaId));
 
@@ -156,7 +191,63 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         Reserva reservaActualizada = reservaRepositorio.save(reservaFromDb);
 
-        return composeReservaResponse(reservaActualizada);
+        ReservaResponse reservaResponse = composeReservaResponse(reservaActualizada);
+
+        emailClient.sendConfirmationEmail(reservaResponse);
+
+        return reservaResponse;
+    }
+
+    @Override
+    public ReservaResponse cancelarReservaByClient(Long id, ReservaCancelRequest reservaCancelRequest) {
+        Reserva reserva = reservaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
+
+        if (!reserva.getCliente().getEmail().equals(reservaCancelRequest.getClienteEmail())) {
+            throw new IllegalArgumentException("El email proporcionado no coincide con el de la reserva");
+        }
+
+        return cancelarReserva(reserva);
+    }
+
+    @Override
+    public ReservaResponse cancelarReservaByAdmin(Long id) {
+        Reserva reserva = reservaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
+        
+        return cancelarReserva(reserva);
+    }
+
+    private ReservaResponse cancelarReserva(Reserva reserva) {
+        if (reserva.getReservaStatus() == ReservaStatus.CANCELADA) {
+            throw new IllegalStateException("La reserva ya está cancelada");
+        }
+
+        reserva.setReservaStatus(ReservaStatus.CANCELADA);
+        Reserva reservaActualizada = reservaRepositorio.save(reserva);
+
+        ReservaResponse response = composeReservaResponse(reservaActualizada);
+
+        emailClient.sendCancelationEmail(response);
+
+        return response;
+    }
+
+    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Transactional
+    public void marcarReservasExpiradas(){
+        LocalDateTime now = LocalDateTime.now();
+        List<Reserva> reservasExpiradas = reservaRepositorio.findByReservaStatusAndReservaFinBefore(ReservaStatus.ACTIVA, now);
+
+        if (!reservasExpiradas.isEmpty()) {
+            log.info("Marcando {} reservas como EXPIRADAS", reservasExpiradas.size());
+        } else {
+            log.info("Ninguna RESERVA ha expirado, de momento");
+        }
+ 
+        for (Reserva reserva : reservasExpiradas) {
+            reserva.setReservaStatus(ReservaStatus.EXPIRADA);
+        }
     }
 
     private ReservaResponse composeReservaResponse(Reserva reservaGuardada) {

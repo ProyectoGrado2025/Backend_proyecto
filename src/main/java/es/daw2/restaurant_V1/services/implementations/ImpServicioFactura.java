@@ -55,6 +55,12 @@ public class ImpServicioFactura implements IFServicioFactura{
         return composeFacturaResponse(facturaFromDb);
     }
 
+    /**
+     * Crea una factura asociada a un pedido y reserva.
+     * Permite facturar reservas incluso si están en estado EXPIRADA,
+     * actualizando el estado de la reserva a FACTURADA para evitar
+     * cambios futuros y reflejar que la reserva fue utilizada.
+     */
     @Override
     @Transactional
     public FacturaResponse crearFactura(FacturaRequest facturaRequest) {
@@ -74,7 +80,7 @@ public class ImpServicioFactura implements IFServicioFactura{
 
         // reserva asociada al pedido
         Reserva reservaFromDb = pedidoFacturado.getReserva();
-        reservaFromDb.setReservaStatus(ReservaStatus.EXPIRADA);
+        reservaFromDb.setReservaStatus(ReservaStatus.FACTURADA);
         Reserva reservaActualizada = reservaRepositorio.saveAndFlush(reservaFromDb);
 
         // cliente asociado desde la reserva

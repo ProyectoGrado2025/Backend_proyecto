@@ -2,6 +2,8 @@ package es.daw2.restaurant_V1.repositories;
 
 import java.time.LocalDateTime;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,4 +35,18 @@ public interface ReservaRepositorio extends JpaRepository<Reserva, Long>{
     );
 
     List<Reserva> findByMesa(Mesa mesa);
+
+    List<Reserva> findByReservaStatusAndReservaFinBefore(Reserva.ReservaStatus status, LocalDateTime fechaHoraLimite);
+
+    @Query("""
+        SELECT r 
+        FROM Reserva r 
+        WHERE r.reservaFecha >= :startOfDay AND r.reservaFecha < :endOfDay
+    """)
+    Page<Reserva> findByReservaFechaBetween(
+        @Param("startOfDay") LocalDateTime startOfDay,
+        @Param("endOfDay") LocalDateTime endOfDay,
+        Pageable pageable
+    );
+
 }

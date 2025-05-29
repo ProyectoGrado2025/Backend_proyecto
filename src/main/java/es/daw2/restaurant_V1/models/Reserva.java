@@ -43,7 +43,8 @@ public class Reserva {
     public enum ReservaStatus{
         ACTIVA,
         EXPIRADA,
-        CANCELADA
+        CANCELADA,
+        FACTURADA
     }
     
     @ManyToOne

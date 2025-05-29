@@ -14,6 +14,7 @@ import es.daw2.restaurant_V1.dtos.exceptions.ExceptionResponse;
 import es.daw2.restaurant_V1.exceptions.custom.DuplicateResourceException;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.exceptions.custom.NoTablesAvailableException;
+import es.daw2.restaurant_V1.exceptions.custom.ReservaFechaPasadaException;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
@@ -165,6 +166,25 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exceptionResponse);
+    }
+
+    /**
+     * Maneja la excepción personalizada cuando se intenta crear o actualizar una reserva
+     * con una fecha que ya ha pasado.
+     * Responde con un estado HTTP 409 (Conflict)
+     *
+     * @param exception La excepción lanzada cuando la fecha de la reserva es anterior al momento actual
+     * @param httpServletRequest Información de la petición HTTP que causó la excepción
+     * @return ResponseEntity con detalles de la excepción y código HTTP 409
+     */
+    @ExceptionHandler(ReservaFechaPasadaException.class)
+    public ResponseEntity<?> handlerReservaFechaPasadaException(ReservaFechaPasadaException exception, HttpServletRequest httpServletRequest) {
+        ExceptionResponse exceptionResponse = buildExceptionResponse(
+            exception,
+            httpServletRequest,
+            HttpStatus.CONFLICT
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exceptionResponse);
     }
 
     /**

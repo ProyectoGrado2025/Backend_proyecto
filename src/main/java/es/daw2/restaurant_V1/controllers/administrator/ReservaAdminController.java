@@ -36,6 +36,15 @@ public class ReservaAdminController {
         return ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/reservas/listar/hoy")
+    public ResponseEntity<Page<ReservaResponse>> getTodayReservas(Pageable pageable) {
+        Page<ReservaResponse> reservaPage = servicios.RESERVA.getTodayReservas(pageable);
+        if(reservaPage.hasContent()){
+            return ResponseEntity.ok().body(reservaPage);
+        }
+        return ResponseEntity.notFound().build();
+    }
+    
     @GetMapping("/reservas/detalle/{id}")
     public ResponseEntity<ReservaResponse> getMesaById (@PathVariable Long id) {
         return ResponseEntity.ok().body(servicios.RESERVA.findReservaById(id));
@@ -52,6 +61,12 @@ public class ReservaAdminController {
     @PutMapping("/reservas/{id}/actualizar")
     public ResponseEntity<ReservaResponse> actualizarReserva(@PathVariable Long id, @RequestBody @Valid ReservaUpdateRequest reservaUpdateRequest) {
         ReservaResponse reservaResponse = servicios.RESERVA.actualizarReserva(id, reservaUpdateRequest);
+        return ResponseEntity.ok().body(reservaResponse);
+    }
+
+    @PutMapping("/reservas/{id}/cancelar")
+    public ResponseEntity<ReservaResponse> cancelarReservaAdmin(@PathVariable Long id) {
+        ReservaResponse reservaResponse = servicios.RESERVA.cancelarReservaByAdmin(id);
         return ResponseEntity.ok().body(reservaResponse);
     }
 }
