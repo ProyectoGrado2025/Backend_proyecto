@@ -49,7 +49,7 @@ public class ImpServicioReserva implements IFServicioReserva{
     @Autowired
     EmailClient emailClient;
 
-    private static final Logger log = LoggerFactory.getLogger(ImpServicioReserva.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ImpServicioReserva.class);
     private static final Duration DURACION_RESERVA = Duration.ofHours(1).plusMinutes(55);
 
     @Override
@@ -126,7 +126,11 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         ReservaResponse reservaResponse = composeReservaResponse(reservaGuardada);
 
-        emailClient.sendConfirmationEmail(reservaResponse);
+        try {
+            emailClient.sendConfirmationEmail(reservaResponse);
+        } catch (Exception e) {
+            LOG.warn("No se pudo enviar el correo de confirmación para la reserva {}: {}", reservaGuardada.getReservaId(), e.getMessage());
+        }
 
         return reservaResponse;
     }
@@ -135,19 +139,27 @@ public class ImpServicioReserva implements IFServicioReserva{
     @Transactional
     public ReservaResponse actualizarReserva(Long reservaId, ReservaUpdateRequest reservaUpdateRequest) {
 
-        if (reservaUpdateRequest.getNuevaFecha().isBefore(LocalDateTime.now())) {
+        if (reservaUpdateRequest.getNuevaFecha() != null && 
+            reservaUpdateRequest.getNuevaFecha().isBefore(LocalDateTime.now())) {
             throw new ReservaFechaPasadaException("La fecha de la reserva no puede ser anterior a la fecha de hoy");
         }
 
         Reserva reservaFromDb = reservaRepositorio.findById(reservaId)
                 .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + reservaId));
 
-        LocalDateTime nuevaFecha = reservaUpdateRequest.getNuevaFecha();
-        Integer nuevoNumeroPersonas = reservaUpdateRequest.getNuevoNumeroPersonas();
+        LocalDateTime nuevaFecha = reservaUpdateRequest.getNuevaFecha() != null
+                ? reservaUpdateRequest.getNuevaFecha()
+                : reservaFromDb.getReservaFecha();
+
         LocalDateTime nuevaFechaFin = nuevaFecha.plus(DURACION_RESERVA);
 
+        Integer nuevoNumeroPersonas = reservaUpdateRequest.getNuevoNumeroPersonas() != null
+                ? reservaUpdateRequest.getNuevoNumeroPersonas()
+                : reservaFromDb.getNumeroPersonas();
+
         // NOTA: SOLO SE BUSCA UNA NUEVA MESA SI CAMBIA EL NÚMERO DE PERSONAS
-        if(!nuevoNumeroPersonas.equals(reservaFromDb.getNumeroPersonas())){
+        if (reservaUpdateRequest.getNuevoNumeroPersonas() != null &&
+            !nuevoNumeroPersonas.equals(reservaFromDb.getNumeroPersonas())) {
 
             List<Mesa> mesasDisponibles = mesaRepositorio.findMesasDisponibles(
                 nuevoNumeroPersonas,
@@ -155,15 +167,14 @@ public class ImpServicioReserva implements IFServicioReserva{
                 nuevaFechaFin
             );
 
-            if(mesasDisponibles.isEmpty()){
+            if (mesasDisponibles.isEmpty()) {
                 throw new NoTablesAvailableException("NO HAY MESAS DISPONIBLES PARA LA NUEVA FECHA Y NÚMERO DE PERSONAS");
             }
 
             reservaFromDb.setMesa(mesasDisponibles.get(0));
 
-        // NOTA 2: SI EL NÚMERO DE PERSONAS NO CAMBIA, SOLO SE VERIFICA QUE LA MISMA MESA SIGUE LIBRE
-        } else {
-
+        } else if (reservaUpdateRequest.getNuevaFecha() != null) {
+            // NOTA 2: SI EL NÚMERO DE PERSONAS NO CAMBIA, SOLO SE VERIFICA QUE LA MISMA MESA SIGUE LIBRE
             boolean mesaDisponible = reservaRepositorio.isMesaDisponibleEnRango(
                 reservaFromDb.getMesa().getMesaId(),
                 nuevaFecha,
@@ -171,17 +182,22 @@ public class ImpServicioReserva implements IFServicioReserva{
                 reservaFromDb.getReservaId()
             );
 
-            if(!mesaDisponible){
+            if (!mesaDisponible) {
                 throw new NoTablesAvailableException("LA MESA ACTUAL NO ESTÁ DISPONIBLE EN LA NUEVA FRANJA HORARIA");
             }
         }
 
-        reservaFromDb.setReservaFecha(nuevaFecha);
-        reservaFromDb.setReservaFin(nuevaFechaFin);
-        reservaFromDb.setNumeroPersonas(nuevoNumeroPersonas);
+        if (reservaUpdateRequest.getNuevaFecha() != null) {
+            reservaFromDb.setReservaFecha(nuevaFecha);
+            reservaFromDb.setReservaFin(nuevaFechaFin);
+        }
 
-        if(reservaUpdateRequest.getNuevosAlergenos() != null){
-            if(reservaUpdateRequest.getNuevosAlergenos().isEmpty()){
+        if (reservaUpdateRequest.getNuevoNumeroPersonas() != null) {
+            reservaFromDb.setNumeroPersonas(nuevoNumeroPersonas);
+        }
+
+        if (reservaUpdateRequest.getNuevosAlergenos() != null) {
+            if (reservaUpdateRequest.getNuevosAlergenos().isEmpty()) {
                 reservaFromDb.getAlergenos().clear();
             } else {
                 List<Alergeno> nuevosAlergenos = alergenoRepositorio.findAllById(reservaUpdateRequest.getNuevosAlergenos());
@@ -193,7 +209,11 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         ReservaResponse reservaResponse = composeReservaResponse(reservaActualizada);
 
-        emailClient.sendConfirmationEmail(reservaResponse);
+        try {
+            emailClient.sendModificationEmail(reservaResponse);
+        } catch (Exception e) {
+            LOG.warn("No se pudo enviar el correo de confirmación para la reserva {}: {}", reservaActualizada.getReservaId(), e.getMessage());
+        }
 
         return reservaResponse;
     }
@@ -228,7 +248,11 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         ReservaResponse response = composeReservaResponse(reservaActualizada);
 
-        emailClient.sendCancelationEmail(response);
+        try {
+            emailClient.sendCancelationEmail(response);
+        } catch (Exception e) {
+            LOG.warn("No se pudo enviar el correo de confirmación para la reserva {}: {}", reserva.getReservaId(), e.getMessage());
+        }
 
         return response;
     }
@@ -240,9 +264,9 @@ public class ImpServicioReserva implements IFServicioReserva{
         List<Reserva> reservasExpiradas = reservaRepositorio.findByReservaStatusAndReservaFinBefore(ReservaStatus.ACTIVA, now);
 
         if (!reservasExpiradas.isEmpty()) {
-            log.info("Marcando {} reservas como EXPIRADAS", reservasExpiradas.size());
+            LOG.info("Marcando {} reservas como EXPIRADAS", reservasExpiradas.size());
         } else {
-            log.info("Ninguna RESERVA ha expirado, de momento");
+            LOG.info("Ninguna RESERVA ha expirado, de momento");
         }
  
         for (Reserva reserva : reservasExpiradas) {

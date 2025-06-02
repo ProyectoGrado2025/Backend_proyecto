@@ -2,6 +2,7 @@ package es.daw2.restaurant_V1.config;
 
 import org.springframework.stereotype.Component;
 
+import es.daw2.restaurant_V1.services.interfaces.IFServicioAlergeno;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioReserva;
 import lombok.RequiredArgsConstructor;
 
@@ -10,5 +11,6 @@ import lombok.RequiredArgsConstructor;
 public class ClienteServiceGroup {
 
     public final IFServicioReserva RESERVA;
+    public final IFServicioAlergeno ALERGENO;
     
 }
