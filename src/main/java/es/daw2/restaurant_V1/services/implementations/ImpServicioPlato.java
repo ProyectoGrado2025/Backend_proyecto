@@ -43,14 +43,6 @@ public class ImpServicioPlato implements IFServicioPlato{
         return composePlatoResponse(plato);
     }
 
-    /**
-     * Crea un nuevo Plato a partir de la información recibida en PlatoRequest,
-     * validando que los alérgenos y categorías existan en base de datos.
-     *
-     * @param platoRequest Datos del plato a crear.
-     * @return PlatoResponse con la información creada y formateada.
-     * @throws EntityNotFoundException si uno o más alérgenos o categorías no existen.
-     */
     @Override
     public PlatoResponse crearPlato(PlatoRequest platoRequest) {
         Plato plato = new Plato();

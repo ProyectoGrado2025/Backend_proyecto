@@ -21,7 +21,8 @@ import lombok.Data;
 @Data
 public class Factura {
     
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Long facturaId;
 
     @Column(name = "factura_fecha", nullable = false, columnDefinition = "DATETIME")
@@ -34,7 +35,7 @@ public class Factura {
     @Column(name = "forma_pago", nullable = false)
     private FormaPago formaPago;
 
-    public enum FormaPago{
+    public enum FormaPago {
         EFECTIVO,
         TARJETA,
         BIZUM,
@@ -52,4 +53,17 @@ public class Factura {
     @OneToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
+
+    @ManyToOne
+    @JoinColumn(name = "beneficio_id")
+    private Beneficio beneficio;
+        
+    @Column(name = "puntos_generados")
+    private Long puntosGenerados;
+
+    @Column(name = "descuento_aplicado", precision = 5, scale = 2, nullable = false)
+    private BigDecimal descuentoAplicado;
+
+    @Column(name = "nombre_rango_aplicado", nullable = false)
+    private String nombreRangoAplicado;
 }

@@ -11,5 +11,4 @@ public class RestaurantV1Application {
 	public static void main(String[] args) {
 		SpringApplication.run(RestaurantV1Application.class, args);
 	}
-
 }

@@ -36,6 +36,8 @@ public class ImpServicioCliente implements IFServicioCliente {
         clienteResponse.setEmailCliente(cliente.getEmail());
         clienteResponse.setNombreCliente(cliente.getClienteNombre());
         clienteResponse.setNumeroCliente(cliente.getClienteTlfn());
+        clienteResponse.setRangoCliente(cliente.getRango().getNombreRango());
+        clienteResponse.setClientePuntos(cliente.getPuntosFidelizacion());
 
         return clienteResponse;
     }

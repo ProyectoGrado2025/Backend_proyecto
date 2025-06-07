@@ -70,6 +70,7 @@ public class HttpSecurityConfig {
         authReqConfig.requestMatchers(HttpMethod.GET, "/client/**").permitAll();
         authReqConfig.requestMatchers(HttpMethod.POST, "/client/**").permitAll();
         authReqConfig.requestMatchers(HttpMethod.PUT, "/client/**").permitAll();
+        authReqConfig.requestMatchers(HttpMethod.GET, "/stats/**").permitAll();
         authReqConfig.anyRequest().authenticated();
     }
 

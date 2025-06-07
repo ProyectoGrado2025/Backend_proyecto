@@ -1,0 +1,14 @@
+package es.daw2.restaurant_V1.dtos.stadistics.clientes;
+
+import java.io.Serializable;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class DistribucionClientesPorRangoDTO implements Serializable {
+
+    private String nombreRango;
+    private Long totalClientes;
+}

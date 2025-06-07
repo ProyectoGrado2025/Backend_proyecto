@@ -47,20 +47,23 @@ public class ImpServicioPedido implements IFServicioPedido{
     @Override
     @Transactional
     public PedidoResponse crearPedido(PedidoRequest pedidoRequest) {
-        // Se busca la reserva asociada
+        // se busca la reserva asociada
         Reserva reservaFromDb = reservaRepositorio.findById(pedidoRequest.getReservaId())
                 .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + pedidoRequest.getReservaId()));
 
-        // Se crea el  nuevo pedido y se le asigna la reserva
+        if(reservaFromDb.getPedido() != null){
+            throw new IllegalStateException("La reserva ya tiene un pedido.");
+        }
+        // se crea el  nuevo pedido y se le asigna la reserva
         Pedido pedido = new Pedido();
         pedido.setReserva(reservaFromDb);
 
-        // Se crean las  líneas de pedido y se asignan al pedido
+        // se crean las  líneas de pedido y se asignan al pedido
         List<LineaPedido> lineasPedido = servicioLineaPedido.crearLineaPedido(pedidoRequest.getLineasPedido(), pedido);
         pedido.setLineasPedido(lineasPedido);
 
-        // Se guarda el pedido
-        Pedido pedidoGuardado = pedidoRepositorio.save(pedido);
+        // se guarda el pedido
+        Pedido pedidoGuardado = pedidoRepositorio.saveAndFlush(pedido);
 
         return composePedidoResponse(pedidoGuardado);
     }

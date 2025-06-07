@@ -21,10 +21,12 @@ import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateRequest;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.exceptions.custom.NoTablesAvailableException;
+import es.daw2.restaurant_V1.exceptions.custom.ReservaAlreadyFacturadaException;
 import es.daw2.restaurant_V1.exceptions.custom.ReservaFechaPasadaException;
 import es.daw2.restaurant_V1.models.Alergeno;
 import es.daw2.restaurant_V1.models.Cliente;
 import es.daw2.restaurant_V1.models.Mesa;
+import es.daw2.restaurant_V1.models.Rango;
 import es.daw2.restaurant_V1.models.Reserva;
 import es.daw2.restaurant_V1.models.Reserva.ReservaStatus;
 import es.daw2.restaurant_V1.repositories.AlergenoRepositorio;
@@ -32,6 +34,7 @@ import es.daw2.restaurant_V1.repositories.ClienteRepositorio;
 import es.daw2.restaurant_V1.repositories.MesaRepositorio;
 import es.daw2.restaurant_V1.repositories.ReservaRepositorio;
 import es.daw2.restaurant_V1.services.email.EmailClient;
+import es.daw2.restaurant_V1.services.interfaces.IFServicioRango;
 import es.daw2.restaurant_V1.services.interfaces.IFServicioReserva;
 import jakarta.transaction.Transactional;
 
@@ -48,6 +51,8 @@ public class ImpServicioReserva implements IFServicioReserva{
     AlergenoRepositorio alergenoRepositorio;
     @Autowired
     EmailClient emailClient;
+    @Autowired
+    IFServicioRango servicioRango;
 
     private static final Logger LOG = LoggerFactory.getLogger(ImpServicioReserva.class);
     private static final Duration DURACION_RESERVA = Duration.ofHours(1).plusMinutes(55);
@@ -89,6 +94,10 @@ public class ImpServicioReserva implements IFServicioReserva{
                     nuevoCliente.setClienteNombre(reservaRequest.getClienteNombre());
                     nuevoCliente.setEmail(reservaRequest.getClienteEmail());
                     nuevoCliente.setClienteTlfn(reservaRequest.getClienteTlfn());
+                    nuevoCliente.setPuntosFidelizacion(0L);
+
+                    Rango rango = servicioRango.getRangoByPuntosMinimos(0L);
+                    nuevoCliente.setRango(rango);
 
                     return clienteRepositorio.save(nuevoCliente);
                 }
@@ -146,6 +155,10 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         Reserva reservaFromDb = reservaRepositorio.findById(reservaId)
                 .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + reservaId));
+                
+        if(reservaFromDb.getReservaStatus() == ReservaStatus.FACTURADA){
+            throw new ReservaAlreadyFacturadaException("La RESERVA con ID ["+reservaId+"] ya ha sido facturada y no se puede modificar.");
+        }
 
         LocalDateTime nuevaFecha = reservaUpdateRequest.getNuevaFecha() != null
                 ? reservaUpdateRequest.getNuevaFecha()

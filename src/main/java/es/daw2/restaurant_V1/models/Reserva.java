@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -54,6 +55,9 @@ public class Reserva {
     @ManyToOne
     @JoinColumn(name = "mesa_id", nullable = false)
     private Mesa mesa;
+
+    @OneToOne(mappedBy = "reserva")
+    private Pedido pedido;
 
     @ManyToMany
     @JoinTable(

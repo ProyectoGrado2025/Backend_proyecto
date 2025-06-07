@@ -11,4 +11,6 @@ public class ClienteResponse implements Serializable{
     private String nombreCliente;
     private String emailCliente;
     private String numeroCliente;
+    private String rangoCliente;
+    private Long clientePuntos;
 }

@@ -14,6 +14,7 @@ import es.daw2.restaurant_V1.dtos.exceptions.ExceptionResponse;
 import es.daw2.restaurant_V1.exceptions.custom.DuplicateResourceException;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.exceptions.custom.NoTablesAvailableException;
+import es.daw2.restaurant_V1.exceptions.custom.ReservaAlreadyFacturadaException;
 import es.daw2.restaurant_V1.exceptions.custom.ReservaFechaPasadaException;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -188,6 +189,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Maneja la excepción personalizada cuando se intenta facturar una reserva
+     * que ya ha sido facturada previamente.
+     * Responde con un estado HTTP 409 (Conflict)
+     *
+     * @param exception La excepción lanzada cuando la reserva ya está facturada
+     * @param httpServletRequest Información de la petición HTTP que causó la excepción
+     * @return ResponseEntity con detalles de la excepción y código HTTP 409
+     */
+    @ExceptionHandler(ReservaAlreadyFacturadaException.class)
+    public ResponseEntity<?> handlerReservaAlreadyFacturadaException (ReservaAlreadyFacturadaException exception, HttpServletRequest httpServletRequest){
+        ExceptionResponse exceptionResponse = buildExceptionResponse(
+            exception,
+            httpServletRequest,
+            HttpStatus.CONFLICT
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exceptionResponse);
+    }
+
+    /**
      * Maneja cualquier excepción no controlada o inesperada que no haya sido capturada por otros handlers
      * Responde con un estado HTTP 500 (Internal Server Error)
      * 
@@ -204,7 +224,6 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionResponse);
     }
-
 
     /**
      * Construye un objeto ExceptionResponse con los datos relevantes de la excepción y la petición HTTP

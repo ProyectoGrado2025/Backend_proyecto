@@ -12,18 +12,17 @@ import lombok.Data;
 public class FacturaResponse implements Serializable {
 
     private Long facturaId;
-
     private LocalDateTime fechaFactura;
-
     private BigDecimal facturaPrecio;
-
     private String formaPago;
 
-    private PedidoResponse pedidoResponse; 
-
-    private String nombreCliente;
+    private PedidoResponse pedidoResponse;
+    private ClienteResponse clienteResponse;
 
     private Long reservaId;
+    private String beneficioCodigo;
 
-    private ClienteResponse clienteResponse; 
+    private BigDecimal descuentoAplicado;
+    private Long puntosGenerados;
+    private String nombreRangoAplicado;
 }

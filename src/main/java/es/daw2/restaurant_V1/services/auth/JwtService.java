@@ -42,13 +42,13 @@ public class JwtService {
     }
 
     public String extractJwtFromRequest(HttpServletRequest request) {
-        // 1. Obtener el encabezado Http llamado "Authorization"
+        // a. obtener el encabezado Http llamado "Authorization"
         String authHeader = request.getHeader("Authorization");
         if(!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")){
             return null;
         }
 
-        // 2. Obtener el Token JWT desde el encabezado
+        // b. obtener el Token JWT desde el encabezado
         return authHeader.split(" ")[1];
         
     }

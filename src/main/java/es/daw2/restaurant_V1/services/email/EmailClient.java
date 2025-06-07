@@ -3,7 +3,12 @@ package es.daw2.restaurant_V1.services.email;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import es.daw2.restaurant_V1.dtos.facturas.FacturaResponse;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
+import es.daw2.restaurant_V1.dtos.stadistics.clientes.ClienteStadisticsBodyDTO;
+import es.daw2.restaurant_V1.dtos.stadistics.facturas.FacturaStadisticsbodyDTO;
+import es.daw2.restaurant_V1.dtos.stadistics.platos.PlatoStadisticsBodyDTO;
+import es.daw2.restaurant_V1.dtos.stadistics.reservas.ReservaStadisticsBodyDTO;
 
 @Component
 public class EmailClient {
@@ -38,6 +43,51 @@ public class EmailClient {
         webClient.post()
                     .uri("/send/cancelacion")
                     .bodyValue(reservaResponse)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+    }
+
+    public void sendFactura (FacturaResponse facturaResponse){
+        webClient.post()
+                    .uri("/send/factura")
+                    .bodyValue(facturaResponse)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+    }
+
+    public void sendReservaReporte (ReservaStadisticsBodyDTO stats){
+        webClient.post()
+                    .uri("/send/reserva/stats")
+                    .bodyValue(stats)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+    }
+
+    public void sendFacturaReporte (FacturaStadisticsbodyDTO stats){
+        webClient.post()
+                    .uri("/send/factura/stats")
+                    .bodyValue(stats)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+    }
+
+    public void sendPlatoReporte (PlatoStadisticsBodyDTO stats){
+        webClient.post()
+                    .uri("/send/plato/stats")
+                    .bodyValue(stats)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+    }
+
+    public void sendClienteReporte (ClienteStadisticsBodyDTO stats){
+        webClient.post()
+                    .uri("/send/cliente/stats")
+                    .bodyValue(stats)
                     .retrieve()
                     .bodyToMono(Void.class)
                     .block();
