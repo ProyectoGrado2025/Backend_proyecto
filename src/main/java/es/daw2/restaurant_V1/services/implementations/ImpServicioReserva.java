@@ -252,8 +252,8 @@ public class ImpServicioReserva implements IFServicioReserva{
     }
 
     private ReservaResponse cancelarReserva(Reserva reserva) {
-        if (reserva.getReservaStatus() == ReservaStatus.CANCELADA) {
-            throw new IllegalStateException("La reserva ya está cancelada");
+        if (reserva.getReservaStatus() == ReservaStatus.CANCELADA || reserva.getReservaStatus() == ReservaStatus.FACTURADA) {
+            throw new IllegalStateException("La reserva ya se encuentra CANCELADA o FACTURADA");
         }
 
         reserva.setReservaStatus(ReservaStatus.CANCELADA);
