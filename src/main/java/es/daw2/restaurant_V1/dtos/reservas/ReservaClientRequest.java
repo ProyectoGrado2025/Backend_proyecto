@@ -5,6 +5,6 @@ import java.io.Serializable;
 import lombok.Data;
 
 @Data
-public class ReservaCancelRequest implements Serializable{
+public class ReservaClientRequest implements Serializable{
     private String clienteEmail;
 }

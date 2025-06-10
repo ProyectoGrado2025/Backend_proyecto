@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import es.daw2.restaurant_V1.dtos.clientes.ClienteRangoRequest;
+import es.daw2.restaurant_V1.dtos.clientes.ClienteRangoResponse;
 import es.daw2.restaurant_V1.dtos.clientes.ClienteResponse;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.models.Cliente;
@@ -28,6 +30,28 @@ public class ImpServicioCliente implements IFServicioCliente {
         Cliente cliente = clientRepository.findById(id)
                 .orElseThrow(()->new EntityNotFoundException("Cliente no encontrado con ID: " + id));
         return composeClienteResponse(cliente);
+    }
+
+    @Override
+    public ClienteRangoResponse consultarRangoInfoById (ClienteRangoRequest clienteRangoRequest, Long id){
+        Cliente cliente = clientRepository.findById(id)
+                .orElseThrow(()->new EntityNotFoundException("Cliente no encontrado con ID: " + id));
+        if(!clienteRangoRequest.getEmailCliente().equals(cliente.getEmail())){
+            throw new IllegalArgumentException("Se ha encontrado el cliente, pero los EMAILS NO COINCIDEN");
+        }
+
+        return composeClienteRangoInfo(cliente);
+    }
+
+    private ClienteRangoResponse composeClienteRangoInfo(Cliente cliente){
+        ClienteRangoResponse clienteRangoResponse = new ClienteRangoResponse();
+        clienteRangoResponse.setNombreCliente(cliente.getClienteNombre());
+        clienteRangoResponse.setEmailCliente(cliente.getEmail());
+        clienteRangoResponse.setRangoCliente(cliente.getRango().getNombreRango());
+        clienteRangoResponse.setPntosCliente(cliente.getPuntosFidelizacion());
+        clienteRangoResponse.setDescuento(cliente.getRango().getDescuento().longValue());
+
+        return clienteRangoResponse;
     }
 
     private ClienteResponse composeClienteResponse (Cliente cliente){

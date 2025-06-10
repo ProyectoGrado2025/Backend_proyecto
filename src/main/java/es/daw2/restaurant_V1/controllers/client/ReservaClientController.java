@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.daw2.restaurant_V1.config.ClienteServiceGroup;
-import es.daw2.restaurant_V1.dtos.reservas.ReservaCancelRequest;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaClientRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
-import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateRequest;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateClientRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -27,8 +27,8 @@ public class ReservaClientController {
     private ClienteServiceGroup servicios;
 
     @GetMapping("/reservas/detalle/{id}")
-    public ResponseEntity<ReservaResponse> getReservaById (@PathVariable Long id) {
-        return ResponseEntity.ok().body(servicios.RESERVA.findReservaById(id));
+    public ResponseEntity<ReservaResponse> getReservaByIdByClient (@PathVariable Long id, @RequestBody ReservaClientRequest reservaClientRequest) {
+        return ResponseEntity.ok().body(servicios.RESERVA.findReservaByIdByClient(reservaClientRequest, id));
     }
 
     @PostMapping("/reservas/crear")
@@ -39,13 +39,13 @@ public class ReservaClientController {
     }
 
     @PutMapping("/reservas/{id}/actualizar")
-    public ResponseEntity<ReservaResponse> actualizarReserva(@PathVariable Long id, @RequestBody @Valid ReservaUpdateRequest reservaUpdateRequest) {
-        ReservaResponse reservaResponse = servicios.RESERVA.actualizarReserva(id, reservaUpdateRequest);
+    public ResponseEntity<ReservaResponse> actualizarReservaByClient(@PathVariable Long id, @RequestBody @Valid ReservaUpdateClientRequest reservaUpdateRequest) {
+        ReservaResponse reservaResponse = servicios.RESERVA.actualizarReservaByClient(id, reservaUpdateRequest);
         return ResponseEntity.ok().body(reservaResponse);
     }
 
     @PutMapping("reservas/{id}/cancelar")
-    public ResponseEntity<ReservaResponse> cancelarReservaByClient (@PathVariable Long id, @RequestBody ReservaCancelRequest reservaCancelRequest) {
+    public ResponseEntity<ReservaResponse> cancelarReservaByClient (@PathVariable Long id, @RequestBody ReservaClientRequest reservaCancelRequest) {
         ReservaResponse reservaResponse = servicios.RESERVA.cancelarReservaByClient(id, reservaCancelRequest);
         return ResponseEntity.ok().body(reservaResponse);
     }

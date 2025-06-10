@@ -15,9 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import es.daw2.restaurant_V1.dtos.reservas.ReservaCancelRequest;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaClientRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaResponse;
+import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateClientRequest;
 import es.daw2.restaurant_V1.dtos.reservas.ReservaUpdateRequest;
 import es.daw2.restaurant_V1.exceptions.custom.EntityNotFoundException;
 import es.daw2.restaurant_V1.exceptions.custom.NoTablesAvailableException;
@@ -82,6 +83,16 @@ public class ImpServicioReserva implements IFServicioReserva{
     }
 
     @Override
+    public ReservaResponse findReservaByIdByClient(ReservaClientRequest reservaClientRequest, Long id) {
+        Reserva reservaFromDb = reservaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
+        if(!reservaClientRequest.getClienteEmail().equals(reservaFromDb.getCliente().getEmail())){
+            throw new IllegalArgumentException("Se ha encontrado la RESERVA, pero los EMAILS NO COINCIDEN");
+        }
+        return composeReservaResponse(reservaFromDb);
+    }
+
+    @Override
     public ReservaResponse crearReserva (ReservaRequest reservaRequest){
 
         if (reservaRequest.getReservaFecha().isBefore(LocalDateTime.now())) {
@@ -139,6 +150,97 @@ public class ImpServicioReserva implements IFServicioReserva{
             emailClient.sendConfirmationEmail(reservaResponse);
         } catch (Exception e) {
             LOG.warn("No se pudo enviar el correo de confirmación para la reserva {}: {}", reservaGuardada.getReservaId(), e.getMessage());
+        }
+
+        return reservaResponse;
+    }
+
+    @Override
+    @Transactional
+    public ReservaResponse actualizarReservaByClient(Long id, ReservaUpdateClientRequest reservaUpdateRequest) {
+
+        Reserva reservaFromDb = reservaRepositorio.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
+        
+        if(!reservaUpdateRequest.getClienteEmail().equals(reservaFromDb.getCliente().getEmail())){
+            throw new IllegalArgumentException("No se puede modificar la reserva porque el EMAIL proporcionado no coincide con el asociado.");
+        }
+
+        if (reservaUpdateRequest.getNuevaFecha() != null && 
+            reservaUpdateRequest.getNuevaFecha().isBefore(LocalDateTime.now())) {
+            throw new ReservaFechaPasadaException("La fecha de la reserva no puede ser anterior a la fecha de hoy");
+        }
+                
+        if(reservaFromDb.getReservaStatus() == ReservaStatus.FACTURADA){
+            throw new ReservaAlreadyFacturadaException("La RESERVA con ID ["+id+"] ya ha sido facturada y no se puede modificar.");
+        }
+
+        LocalDateTime nuevaFecha = reservaUpdateRequest.getNuevaFecha() != null
+                ? reservaUpdateRequest.getNuevaFecha()
+                : reservaFromDb.getReservaFecha();
+
+        LocalDateTime nuevaFechaFin = nuevaFecha.plus(DURACION_RESERVA);
+
+        Integer nuevoNumeroPersonas = reservaUpdateRequest.getNuevoNumeroPersonas() != null
+                ? reservaUpdateRequest.getNuevoNumeroPersonas()
+                : reservaFromDb.getNumeroPersonas();
+
+        // NOTA: SOLO SE BUSCA UNA NUEVA MESA SI CAMBIA EL NÚMERO DE PERSONAS
+        if (reservaUpdateRequest.getNuevoNumeroPersonas() != null &&
+            !nuevoNumeroPersonas.equals(reservaFromDb.getNumeroPersonas())) {
+
+            List<Mesa> mesasDisponibles = mesaRepositorio.findMesasDisponibles(
+                nuevoNumeroPersonas,
+                nuevaFecha,
+                nuevaFechaFin
+            );
+
+            if (mesasDisponibles.isEmpty()) {
+                throw new NoTablesAvailableException("NO HAY MESAS DISPONIBLES PARA LA NUEVA FECHA Y NÚMERO DE PERSONAS");
+            }
+
+            reservaFromDb.setMesa(mesasDisponibles.get(0));
+
+        } else if (reservaUpdateRequest.getNuevaFecha() != null) {
+            // NOTA 2: SI EL NÚMERO DE PERSONAS NO CAMBIA, SOLO SE VERIFICA QUE LA MISMA MESA SIGUE LIBRE
+            boolean mesaDisponible = reservaRepositorio.isMesaDisponibleEnRango(
+                reservaFromDb.getMesa().getMesaId(),
+                nuevaFecha,
+                nuevaFechaFin,
+                reservaFromDb.getReservaId()
+            );
+
+            if (!mesaDisponible) {
+                throw new NoTablesAvailableException("LA MESA ACTUAL NO ESTÁ DISPONIBLE EN LA NUEVA FRANJA HORARIA");
+            }
+        }
+
+        if (reservaUpdateRequest.getNuevaFecha() != null) {
+            reservaFromDb.setReservaFecha(nuevaFecha);
+            reservaFromDb.setReservaFin(nuevaFechaFin);
+        }
+
+        if (reservaUpdateRequest.getNuevoNumeroPersonas() != null) {
+            reservaFromDb.setNumeroPersonas(nuevoNumeroPersonas);
+        }
+
+        if (reservaUpdateRequest.getNuevosAlergenos() != null) {
+            if (reservaUpdateRequest.getNuevosAlergenos().isEmpty()) {
+                reservaFromDb.getAlergenos().clear();
+            } else {
+                List<Alergeno> nuevosAlergenos = alergenoRepositorio.findAllById(reservaUpdateRequest.getNuevosAlergenos());
+                reservaFromDb.setAlergenos(nuevosAlergenos);
+            }
+        }
+
+        Reserva reservaActualizada = reservaRepositorio.save(reservaFromDb);
+
+        ReservaResponse reservaResponse = composeReservaResponse(reservaActualizada);
+
+        try {
+            emailClient.sendModificationEmail(reservaResponse);
+        } catch (Exception e) {
+            LOG.warn("No se pudo enviar el correo de confirmación para la reserva {}: {}", reservaActualizada.getReservaId(), e.getMessage());
         }
 
         return reservaResponse;
@@ -232,7 +334,7 @@ public class ImpServicioReserva implements IFServicioReserva{
     }
 
     @Override
-    public ReservaResponse cancelarReservaByClient(Long id, ReservaCancelRequest reservaCancelRequest) {
+    public ReservaResponse cancelarReservaByClient(Long id, ReservaClientRequest reservaCancelRequest) {
         Reserva reserva = reservaRepositorio.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
 
@@ -313,6 +415,5 @@ public class ImpServicioReserva implements IFServicioReserva{
 
         return reservaResponse;
     }
-
 
 }
