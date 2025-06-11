@@ -1,5 +1,6 @@
 package es.daw2.restaurant_V1.services.email;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -15,9 +16,9 @@ public class EmailClient {
 
     private final WebClient webClient;
 
-    public EmailClient (WebClient.Builder builder){
+    public EmailClient (WebClient.Builder builder, @Value("${email.service.base-url}") String emailBaseUrl){
         this.webClient = builder
-                            .baseUrl("http://localhost:8081/email")
+                            .baseUrl(emailBaseUrl)
                             .build();
     }
 

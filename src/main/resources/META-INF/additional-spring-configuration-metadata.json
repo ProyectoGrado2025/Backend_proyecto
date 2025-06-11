@@ -13,5 +13,10 @@
     "name": "fidelizacion.minPuntosBeneficio",
     "type": "java.lang.Long",
     "description": "A description for 'fidelizacion.minPuntosBeneficio'"
+  },
+  {
+    "name": "email.service.base-url",
+    "type": "java.lang.String",
+    "description": "A description for 'email.service.base-url'"
   }
 ]}
