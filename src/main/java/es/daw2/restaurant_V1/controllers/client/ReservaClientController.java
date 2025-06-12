@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.daw2.restaurant_V1.config.ClienteServiceGroup;
@@ -27,8 +28,8 @@ public class ReservaClientController {
     private ClienteServiceGroup servicios;
 
     @GetMapping("/reservas/detalle/{id}")
-    public ResponseEntity<ReservaResponse> getReservaByIdByClient (@PathVariable Long id, @RequestBody ReservaClientRequest reservaClientRequest) {
-        return ResponseEntity.ok().body(servicios.RESERVA.findReservaByIdByClient(reservaClientRequest, id));
+    public ResponseEntity<ReservaResponse> getReservaByIdByClient (@PathVariable Long id, @RequestParam("email") String clienteEmail) {
+        return ResponseEntity.ok().body(servicios.RESERVA.findReservaByIdByClient(clienteEmail, id));
     }
 
     @PostMapping("/reservas/crear")

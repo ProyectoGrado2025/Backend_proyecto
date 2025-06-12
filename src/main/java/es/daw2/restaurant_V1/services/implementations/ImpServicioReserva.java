@@ -83,10 +83,10 @@ public class ImpServicioReserva implements IFServicioReserva{
     }
 
     @Override
-    public ReservaResponse findReservaByIdByClient(ReservaClientRequest reservaClientRequest, Long id) {
+    public ReservaResponse findReservaByIdByClient(String email, Long id) {
         Reserva reservaFromDb = reservaRepositorio.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Reserva no encontrada con ID: " + id));
-        if(!reservaClientRequest.getClienteEmail().equals(reservaFromDb.getCliente().getEmail())){
+        if(!email.equals(reservaFromDb.getCliente().getEmail())){
             throw new IllegalArgumentException("Se ha encontrado la RESERVA, pero los EMAILS NO COINCIDEN");
         }
         return composeReservaResponse(reservaFromDb);

@@ -33,10 +33,10 @@ public class ImpServicioCliente implements IFServicioCliente {
     }
 
     @Override
-    public ClienteRangoResponse consultarRangoInfoById (ClienteRangoRequest clienteRangoRequest, Long id){
+    public ClienteRangoResponse consultarRangoInfoById (String email, Long id){
         Cliente cliente = clientRepository.findById(id)
                 .orElseThrow(()->new EntityNotFoundException("Cliente no encontrado con ID: " + id));
-        if(!clienteRangoRequest.getEmailCliente().equals(cliente.getEmail())){
+        if(!email.equals(cliente.getEmail())){
             throw new IllegalArgumentException("Se ha encontrado el cliente, pero los EMAILS NO COINCIDEN");
         }
 

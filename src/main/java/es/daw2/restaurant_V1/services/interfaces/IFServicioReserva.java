@@ -17,7 +17,7 @@ public interface IFServicioReserva {
     public abstract Page<ReservaResponse> getTodayReservas(Pageable pageable);
     public abstract Page<ReservaResponse> getAllReservas(Pageable pageable);
     public abstract ReservaResponse findReservaById(Long id);
-    public ReservaResponse findReservaByIdByClient(ReservaClientRequest reservaClientRequest, Long id);
+    public ReservaResponse findReservaByIdByClient(String clienteEmail, Long id);
     public ReservaResponse cancelarReservaByClient (Long id, ReservaClientRequest reservaCancelRequest);
     public ReservaResponse cancelarReservaByAdmin (Long id);
 }
